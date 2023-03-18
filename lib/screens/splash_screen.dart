@@ -18,8 +18,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   final List _audioFiles = [];
-  final AudioPlayer _player = AudioPlayer();
-  Duration elapsed = Duration.zero;
+  AudioPlayer _player = AudioPlayer();
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void playAudio(String path, index) {
     _player.stop();
+    _player = AudioPlayer();
     _player.play(DeviceFileSource(path), mode: PlayerMode.lowLatency);
 
     _player.onDurationChanged.listen((Duration d) {
@@ -87,8 +87,10 @@ class _SplashScreenState extends State<SplashScreen> {
       setState(() => _audioFiles[index][3] = d);
     });
     _player.onPlayerComplete.listen((event) async {
-      await Future.delayed(Duration(milliseconds: 500),
-          () => setState(() => elapsed = Duration.zero));
+      await Future.delayed(
+          Duration(milliseconds: 500),
+          () => setState(
+              () => _audioFiles[index][3] = Duration(milliseconds: 1)));
     });
   }
 
@@ -116,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> {
     File audioFile = File(filePath);
     Uint8List audioBytes = await audioFile.readAsBytes();
     int numChannels = 1; // assuming mono audio
-    int bytesPerSample = 2; // assuming 16-bit audio
+    int bytesPerSample = 8; // assuming 16-bit audio
 
     List<double> samples = <double>[];
     try {
