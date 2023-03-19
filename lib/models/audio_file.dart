@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:yezer/models/waveform.dart';
+import 'package:yezer/utilities/duration_helpers.dart';
 
 class AudioFile {
   static const String defaultName = 'Audio File';
@@ -17,6 +18,10 @@ class AudioFile {
   PlayerMode get playerMode =>
       duration.inMinutes > 10 ? PlayerMode.mediaPlayer : PlayerMode.lowLatency;
   PlayerState? state;
+  String get counter =>
+      '${durationToText(elapsed, match: duration)} / ${durationToText(duration)}';
+  String get elapsedCounter => durationToText(elapsed, match: duration);
+  String get durationCounter => durationToText(duration);
 
   AudioFile({
     this.path = '',
@@ -42,5 +47,6 @@ class AudioFile {
 
   void onComplete(PlayerState playerState) {
     state = playerState;
+    elapsed = Duration.zero;
   }
 }

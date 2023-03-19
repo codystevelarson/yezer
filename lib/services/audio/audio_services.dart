@@ -1,25 +1,48 @@
 import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:yezer/models/audio_file.dart';
 
-Future<AudioFile?> importAudioFile() async {
+Future<List<AudioFile>?> importAudioFile() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     type: FileType.audio,
-    allowMultiple: false,
+    allowMultiple: true,
   );
   if (result == null) return null;
+  List<AudioFile> files = [];
+  for (final file in result.files) {
+    List<double> samples = await getAudioSamples(file.path!);
+    List<double> parsedSamples = filterSamples(samples);
+    List<Future> futures = [];
+    var filePlayer = AudioPlayer();
+    await filePlayer.setSourceDeviceFile(file.path!);
+    AudioFile audio = AudioFile(
+      path: file.path!,
+      name: file.name,
+      size: file.size,
+    );
+    bool durationBuffer = true;
+    Duration? duration;
+    filePlayer.onDurationChanged.listen((Duration d) {
+      if (d.isNegative) return;
+      audio.duration = d;
+      durationBuffer = false;
+    });
+    filePlayer.getDuration().then((value) {
+      duration = value;
+      durationBuffer = false;
+    });
+    while (durationBuffer) {
+      print(duration);
+    }
+    audio.duration = duration ?? const Duration(milliseconds: 1);
 
-  PlatformFile file = result.files.first;
-  List<double> samples = await getAudioSamples(file.path!);
-  List<double> parsedSamples = filterSamples(samples);
-  AudioFile audio = AudioFile(
-    path: file.path!,
-    name: file.name,
-    size: file.size,
-  );
-  audio.waveform.samples = parsedSamples;
-  return audio;
+    audio.waveform.samples = parsedSamples;
+    files.add(audio);
+  }
+
+  return files;
 }
 
 List<double> filterSamples(List<double> data, {double percentage = 0.1}) {
