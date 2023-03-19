@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:yezer/screens/ConsoleScreen.dart';
+import 'package:yezer/screens/console_screen.dart';
 import 'package:yezer/screens/error_screen.dart';
 import 'package:yezer/screens/splash_screen.dart';
 

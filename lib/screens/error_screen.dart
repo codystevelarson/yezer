@@ -14,7 +14,8 @@ class _ErrorScreenState extends State<ErrorScreen> {
     return SafeArea(
         child: Column(
       children: [
-        ElevatedButton(onPressed: () => context.go('/'), child: Text('Restart'))
+        ElevatedButton(
+            onPressed: () => context.go('/'), child: const Text('Restart'))
       ],
     ));
   }

@@ -27,6 +27,7 @@ class AudioButton extends StatefulWidget {
 
 class _AudioButtonState extends State<AudioButton> {
   final AudioPlayer _player = AudioPlayer();
+  bool loaded = false;
   bool seeking = false;
 
   late AudioFile audio;
@@ -34,13 +35,13 @@ class _AudioButtonState extends State<AudioButton> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     audio = widget.audio;
     if (widget.callback != null) {
       callback = widget.callback!;
     }
-    _player.setSourceDeviceFile(audio.path);
+    _player.setVolume(0);
+    _player.setReleaseMode(audio.releaseMode);
     _player.onDurationChanged.listen((Duration d) {
       if (!d.isNegative) audio.duration = d;
       callback();
@@ -58,6 +59,13 @@ class _AudioButtonState extends State<AudioButton> {
     _player.onPlayerStateChanged.listen((event) {
       switch (event) {
         case PlayerState.playing:
+          if (!loaded) {
+            _player.stop();
+            setState(() {
+              loaded = true;
+            });
+            _player.setVolume(audio.volume);
+          }
           audio.onPlay(event);
           break;
         case PlayerState.paused:
@@ -74,6 +82,14 @@ class _AudioButtonState extends State<AudioButton> {
       }
       callback();
     });
+
+    playAudio(audio);
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
   }
 
   @override
@@ -91,47 +107,107 @@ class _AudioButtonState extends State<AudioButton> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(
-                audio.name,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium!
-                    .copyWith(color: kCLight),
-              ),
-              Text(
-                audio.counter,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium!
-                    .copyWith(color: kCLight),
-              )
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      audio.name,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium!
+                          .copyWith(color: kCLight),
+                    ),
+                    if (!loaded)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: SizedBox(
+                            height: 10,
+                            width: 10,
+                            child: CircularProgressIndicator(
+                              color: kCError,
+                            )),
+                      )
+                  ],
+                ),
+                Text(
+                  audio.counter,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium!
+                      .copyWith(color: kCLight),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _player.stop();
+                    if (widget.onRemove != null) {
+                      widget.onRemove!();
+                    }
+                  },
+                  child: const Icon(
+                    Icons.delete,
+                    color: kCSuccess,
+                  ),
+                ),
+              ],
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                GestureDetector(
-                  onTap: audio.state == PlayerState.playing
-                      ? () => _player.pause()
-                      : () => playAudio(
-                            audio,
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        audio.releaseMode =
+                            audio.releaseMode == ReleaseMode.loop
+                                ? ReleaseMode.stop
+                                : ReleaseMode.loop;
+                        _player.setReleaseMode(audio.releaseMode);
+                        callback();
+                      },
+                      child: Icon(
+                        Icons.loop,
+                        color: audio.releaseMode == ReleaseMode.loop
+                            ? kCPrimary
+                            : kCSuccess,
+                        size: 20,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: audio.state == PlayerState.playing
+                              ? () => _player.pause()
+                              : () => playAudio(
+                                    audio,
+                                  ),
+                          child: Icon(
+                            audio.state == PlayerState.playing
+                                ? Icons.pause_circle
+                                : Icons.play_circle,
+                            color: audio.state == PlayerState.playing
+                                ? kCError
+                                : kCPrimary,
+                            size: 60,
                           ),
-                  child: Icon(
-                    audio.state == PlayerState.playing
-                        ? Icons.pause_circle
-                        : Icons.play_circle,
-                    color: kCPrimary,
-                    size: 60,
-                  ),
-                ),
-                GestureDetector(
-                  child: const Icon(
-                    Icons.stop,
-                    color: kCSuccess,
-                    size: 40,
-                  ),
-                  onTap: () => _player.stop(),
+                        ),
+                        GestureDetector(
+                          child: Icon(
+                            Icons.stop,
+                            color: audio.state == PlayerState.playing
+                                ? kCError
+                                : kCSuccess,
+                            size: 40,
+                          ),
+                          onTap: () => _player.stop(),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 GestureDetector(
                   onTapDown: (details) {
@@ -145,7 +221,7 @@ class _AudioButtonState extends State<AudioButton> {
                     });
                     seekTo(
                       details.localPosition.dx,
-                      MediaQuery.of(context).size.width - 200,
+                      MediaQuery.of(context).size.width - 340,
                       audio,
                       play: true,
                     );
@@ -156,13 +232,13 @@ class _AudioButtonState extends State<AudioButton> {
                     });
                     seekTo(
                       details.localPosition.dx,
-                      MediaQuery.of(context).size.width - 200,
+                      MediaQuery.of(context).size.width - 340,
                       audio,
                     );
                   },
                   onHorizontalDragUpdate: (details) => seekTo(
                     details.localPosition.dx,
-                    MediaQuery.of(context).size.width - 200,
+                    MediaQuery.of(context).size.width - 340,
                     audio,
                   ),
                   onHorizontalDragEnd: (details) {
@@ -174,28 +250,30 @@ class _AudioButtonState extends State<AudioButton> {
                   child: PolygonWaveform(
                     samples: audio.waveform.samples,
                     height: 100,
-                    width: MediaQuery.of(context).size.width - 200,
-                    inactiveColor: kCLight,
+                    width: MediaQuery.of(context).size.width - 340,
+                    inactiveColor: kCLight.withAlpha(100),
                     activeColor: kCPrimary,
-                    elapsedDuration: audio.elapsed,
+                    elapsedDuration: audio.elapsed > audio.duration
+                        ? audio.duration
+                        : audio.elapsed,
                     maxDuration: audio.duration,
                   ),
                 ),
-                Column(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete,
-                        color: kCError,
-                      ),
-                      onPressed: () {
-                        _player.stop();
-                        if (widget.onRemove != null) {
-                          widget.onRemove!();
-                        }
-                      },
-                    ),
-                  ],
+                SizedBox(
+                  width: 200,
+                  child: Slider(
+                    min: 0,
+                    max: 1,
+                    activeColor: kCError,
+                    inactiveColor: kCSuccess,
+                    thumbColor: kCPrimary,
+                    value: audio.volume,
+                    onChanged: (vol) {
+                      audio.volume = vol;
+                      _player.setVolume(vol);
+                      callback();
+                    },
+                  ),
                 )
               ],
             ),
@@ -225,7 +303,7 @@ class _AudioButtonState extends State<AudioButton> {
     var position = Duration(
         milliseconds: (audio.duration.inMilliseconds * percent).floor());
     audio.elapsed = position;
-    _player.seek(audio.elapsed);
+
     callback();
     if (play) {
       playFrom(audio);

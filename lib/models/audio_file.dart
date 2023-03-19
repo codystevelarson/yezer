@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:yezer/models/waveform.dart';
 import 'package:yezer/utilities/duration_helpers.dart';
@@ -22,6 +20,7 @@ class AudioFile {
       '${durationToText(elapsed, match: duration)} / ${durationToText(duration)}';
   String get elapsedCounter => durationToText(elapsed, match: duration);
   String get durationCounter => durationToText(duration);
+  double volume = 1;
 
   AudioFile({
     this.path = '',

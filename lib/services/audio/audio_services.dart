@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:yezer/models/audio_file.dart';
@@ -14,29 +13,12 @@ Future<List<AudioFile>?> importAudioFile() async {
   for (final file in result.files) {
     List<double> samples = await getAudioSamples(file.path!);
     List<double> parsedSamples = filterSamples(samples);
-    List<Future> futures = [];
-    var filePlayer = AudioPlayer();
-    await filePlayer.setSourceDeviceFile(file.path!);
+
     AudioFile audio = AudioFile(
       path: file.path!,
       name: file.name,
       size: file.size,
     );
-    bool durationBuffer = true;
-    Duration? duration;
-    filePlayer.onDurationChanged.listen((Duration d) {
-      if (d.isNegative) return;
-      audio.duration = d;
-      durationBuffer = false;
-    });
-    filePlayer.getDuration().then((value) {
-      duration = value;
-      durationBuffer = false;
-    });
-    while (durationBuffer) {
-      print(duration);
-    }
-    audio.duration = duration ?? const Duration(milliseconds: 1);
 
     audio.waveform.samples = parsedSamples;
     files.add(audio);
@@ -45,7 +27,7 @@ Future<List<AudioFile>?> importAudioFile() async {
   return files;
 }
 
-List<double> filterSamples(List<double> data, {double percentage = 0.1}) {
+List<double> filterSamples(List<double> data, {double percentage = 0.2}) {
   if (percentage <= 0 || percentage >= 1) {
     throw ArgumentError('percent must be between 0 and 1, exclusive');
   }
@@ -53,7 +35,7 @@ List<double> filterSamples(List<double> data, {double percentage = 0.1}) {
   final List<double> results = List<double>.filled(sampleCount, 0);
   int resultIndex = 0;
   double accumulated = 0;
-  for (final double value in data.where((element) => element > .5)) {
+  for (final double value in data.where((element) => element < .6)) {
     accumulated += value;
     if (resultIndex < sampleCount) {
       results[resultIndex] = value;
@@ -72,7 +54,7 @@ List<double> filterSamples(List<double> data, {double percentage = 0.1}) {
 Future<List<double>> getAudioSamples(String filePath) async {
   File audioFile = File(filePath);
   Uint8List audioBytes = await audioFile.readAsBytes();
-  int numChannels = 1; // assuming mono audio
+  int numChannels = 2; // assuming mono audio
   int bytesPerSample = 8; // assuming 16-bit audio
 
   List<double> samples = <double>[];

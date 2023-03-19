@@ -24,18 +24,6 @@ class _SplashScreenState extends State<SplashScreen> {
         key: _scaffoldKey,
         backgroundColor: kCPrimary.withAlpha(100),
         appBar: AppBar(
-          actions: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.menu,
-                  color: kCPrimary,
-                ),
-                onPressed: () => _scaffoldKey.currentState!.openEndDrawer(),
-              ),
-            )
-          ],
           backgroundColor: kCPrimary,
           leading: const Icon(
             Icons.audio_file,
@@ -50,16 +38,28 @@ class _SplashScreenState extends State<SplashScreen> {
                   .copyWith(color: kCSuccess),
             ),
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.menu,
+                  color: kCSuccess,
+                ),
+                onPressed: () => _scaffoldKey.currentState!.openEndDrawer(),
+              ),
+            )
+          ],
         ),
         endDrawer: const Drawer(backgroundColor: kCPrimary),
         floatingActionButton: FloatingActionButton(
-          onPressed: () async => import(),
+          onPressed: () async => await import(),
           tooltip: 'Import Audio File',
+          backgroundColor: kCSuccess,
           child: const Icon(
             Icons.add,
             color: kCPrimary,
           ),
-          backgroundColor: kCSuccess,
         ),
         body: SingleChildScrollView(
           child: Column(
