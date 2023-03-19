@@ -12,6 +12,6 @@ class ConsoleScreen extends StatefulWidget {
 class _ConsoleScreenState extends State<ConsoleScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold()
+    return Scaffold();
   }
 }
