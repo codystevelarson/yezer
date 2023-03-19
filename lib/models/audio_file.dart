@@ -22,6 +22,7 @@ class AudioFile {
       '${durationToText(elapsed, match: duration)} / ${durationToText(duration)}';
   String get elapsedCounter => durationToText(elapsed, match: duration);
   String get durationCounter => durationToText(duration);
+  double volume = 1;
 
   AudioFile({
     this.path = '',

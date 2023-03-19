@@ -53,13 +53,13 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
         endDrawer: const Drawer(backgroundColor: kCPrimary),
         floatingActionButton: FloatingActionButton(
-          onPressed: () async => import(),
+          onPressed: () async => await import(),
           tooltip: 'Import Audio File',
+          backgroundColor: kCSuccess,
           child: const Icon(
             Icons.add,
             color: kCPrimary,
           ),
-          backgroundColor: kCSuccess,
         ),
         body: SingleChildScrollView(
           child: Column(
