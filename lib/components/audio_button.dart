@@ -1,6 +1,3 @@
-import 'dart:io';
-import 'dart:math';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_audio_waveforms/flutter_audio_waveforms.dart';
@@ -38,12 +35,13 @@ class _AudioButtonState extends State<AudioButton> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     audio = widget.audio;
     if (widget.callback != null) {
       callback = widget.callback!;
     }
+    _player.setVolume(0);
+    _player.setReleaseMode(audio.releaseMode);
     _player.onDurationChanged.listen((Duration d) {
       if (!d.isNegative) audio.duration = d;
       callback();
@@ -66,6 +64,7 @@ class _AudioButtonState extends State<AudioButton> {
             setState(() {
               loaded = true;
             });
+            _player.setVolume(audio.volume);
           }
           audio.onPlay(event);
           break;
@@ -83,7 +82,14 @@ class _AudioButtonState extends State<AudioButton> {
       }
       callback();
     });
+
     playAudio(audio);
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
   }
 
   @override
@@ -113,7 +119,16 @@ class _AudioButtonState extends State<AudioButton> {
                           .titleMedium!
                           .copyWith(color: kCLight),
                     ),
-                    if (!loaded) CircularProgressIndicator()
+                    if (!loaded)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: SizedBox(
+                            height: 10,
+                            width: 10,
+                            child: CircularProgressIndicator(
+                              color: kCError,
+                            )),
+                      )
                   ],
                 ),
                 Text(
@@ -123,17 +138,17 @@ class _AudioButtonState extends State<AudioButton> {
                       .titleMedium!
                       .copyWith(color: kCLight),
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.delete,
-                    color: kCError,
-                  ),
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     _player.stop();
                     if (widget.onRemove != null) {
                       widget.onRemove!();
                     }
                   },
+                  child: const Icon(
+                    Icons.delete,
+                    color: kCSuccess,
+                  ),
                 ),
               ],
             ),
@@ -206,7 +221,7 @@ class _AudioButtonState extends State<AudioButton> {
                     });
                     seekTo(
                       details.localPosition.dx,
-                      MediaQuery.of(context).size.width - 400,
+                      MediaQuery.of(context).size.width - 340,
                       audio,
                       play: true,
                     );
@@ -217,13 +232,13 @@ class _AudioButtonState extends State<AudioButton> {
                     });
                     seekTo(
                       details.localPosition.dx,
-                      MediaQuery.of(context).size.width - 400,
+                      MediaQuery.of(context).size.width - 340,
                       audio,
                     );
                   },
                   onHorizontalDragUpdate: (details) => seekTo(
                     details.localPosition.dx,
-                    MediaQuery.of(context).size.width - 400,
+                    MediaQuery.of(context).size.width - 340,
                     audio,
                   ),
                   onHorizontalDragEnd: (details) {
@@ -235,27 +250,30 @@ class _AudioButtonState extends State<AudioButton> {
                   child: PolygonWaveform(
                     samples: audio.waveform.samples,
                     height: 100,
-                    width: MediaQuery.of(context).size.width - 400,
-                    inactiveColor: kCLight,
+                    width: MediaQuery.of(context).size.width - 340,
+                    inactiveColor: kCLight.withAlpha(100),
                     activeColor: kCPrimary,
                     elapsedDuration: audio.elapsed > audio.duration
                         ? audio.duration
                         : audio.elapsed,
-                    maxDuration: audio.duration ?? Duration(milliseconds: 1),
+                    maxDuration: audio.duration,
                   ),
                 ),
-                Column(
-                  children: [
-                    Slider(
-                        min: 0,
-                        max: 1,
-                        value: audio.volume,
-                        onChanged: (vol) {
-                          audio.volume = vol;
-                          _player.setVolume(vol);
-                          callback();
-                        }),
-                  ],
+                SizedBox(
+                  width: 200,
+                  child: Slider(
+                    min: 0,
+                    max: 1,
+                    activeColor: kCError,
+                    inactiveColor: kCSuccess,
+                    thumbColor: kCPrimary,
+                    value: audio.volume,
+                    onChanged: (vol) {
+                      audio.volume = vol;
+                      _player.setVolume(vol);
+                      callback();
+                    },
+                  ),
                 )
               ],
             ),
@@ -271,7 +289,6 @@ class _AudioButtonState extends State<AudioButton> {
       mode: PlayerMode.lowLatency,
       position: audio.elapsed,
     );
-    _player.setReleaseMode(audio.releaseMode);
   }
 
   void playFrom(AudioFile audio) {

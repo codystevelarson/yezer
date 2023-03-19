@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:yezer/models/waveform.dart';
 import 'package:yezer/utilities/duration_helpers.dart';
